@@ -35,14 +35,26 @@ DEVICEBAY_STATUS = """
 """
 
 INTERFACE_IPADDRESSES = """
-<div class="table-badge-group">
-  {% for ip in value.all %}
-    {% if ip.status != 'active' %}
-      <a href="{{ ip.get_absolute_url }}" class="table-badge badge bg-{{ ip.get_status_color }}" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ ip.get_status_display }}">{{ ip }}</a>
-    {% else %}
-      <a href="{{ ip.get_absolute_url }}" class="table-badge">{{ ip }}</a>
-    {% endif %}
-  {% endfor %}
+<div class="table-badge-group container">
+  <div class="row align-items-center">
+    {% for ip in value.all %}
+      {% if ip.status != 'active' %}
+        <div class="col-md-5 mb-2">
+          <a href="{{ ip.get_absolute_url }}" class="table-badge badge bg-{{ ip.get_status_color }} copy-content" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ ip.get_status_display }}">{{ ip }}</a>
+        </div>
+        <div class="col-md-5 mb-2">
+          {% copy_content record.pk prefix="ipaddress_" %}
+        </div>
+      {% else %}
+        <div class="col-md-5 mb-2">
+          <a href="{{ ip.get_absolute_url }}" class="table-badge copy-content" id="ipaddress_{{ record.pk }}">{{ ip }}</a>
+        </div>
+        <div class="col-md-5 mb-2">
+          {% copy_content record.pk prefix="ipaddress_" %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
 </div>
 """
 
