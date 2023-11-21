@@ -3,7 +3,7 @@ import uuid
 import django_rq
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from core.choices import JobStatusChoices
+from core.models import ContentType
 from extras.constants import EVENT_JOB_END, EVENT_JOB_START
-from extras.utils import FeatureQuery
 from netbox.config import get_config
 from netbox.constants import RQ_QUEUE_DEFAULT
 from utilities.querysets import RestrictedQuerySet
@@ -28,9 +28,8 @@ class Job(models.Model):
     Tracks the lifecycle of a job which represents a background task (e.g. the execution of a custom script).
     """
     object_type = models.ForeignKey(
-        to=ContentType,
+        to='contenttypes.ContentType',
         related_name='jobs',
-        limit_choices_to=FeatureQuery('jobs'),
         on_delete=models.CASCADE,
     )
     object_id = models.PositiveBigIntegerField(
@@ -92,6 +91,11 @@ class Job(models.Model):
         null=True,
         blank=True
     )
+    error = models.TextField(
+        verbose_name=_('error'),
+        editable=False,
+        blank=True
+    )
     job_id = models.UUIDField(
         verbose_name=_('job ID'),
         unique=True
@@ -117,6 +121,15 @@ class Job(models.Model):
 
     def get_status_color(self):
         return JobStatusChoices.colors.get(self.status)
+
+    def clean(self):
+        super().clean()
+
+        # Validate the assigned object type
+        if self.object_type not in ContentType.objects.with_feature('jobs'):
+            raise ValidationError(
+                _("Jobs cannot be assigned to this object type ({type}).").format(type=self.object_type)
+            )
 
     @property
     def duration(self):
@@ -158,7 +171,7 @@ class Job(models.Model):
         # Handle webhooks
         self.trigger_webhooks(event=EVENT_JOB_START)
 
-    def terminate(self, status=JobStatusChoices.STATUS_COMPLETED):
+    def terminate(self, status=JobStatusChoices.STATUS_COMPLETED, error=None):
         """
         Mark the job as completed, optionally specifying a particular termination status.
         """
@@ -168,6 +181,8 @@ class Job(models.Model):
 
         # Mark the job as completed
         self.status = status
+        if error:
+            self.error = error
         self.completed = timezone.now()
         self.save()
 

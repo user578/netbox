@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 
 from extras.models import ConfigRevision
+from netbox.config import get_config
 from netbox.views import generic
 from netbox.views.generic.base import BaseObjectView
 from utilities.utils import count_related
@@ -99,7 +100,9 @@ class DataFileListView(generic.ObjectListView):
     filterset = filtersets.DataFileFilterSet
     filterset_form = forms.DataFileFilterForm
     table = tables.DataFileTable
-    actions = ('bulk_delete',)
+    actions = {
+        'bulk_delete': {'delete'},
+    }
 
 
 @register_model_view(DataFile)
@@ -127,7 +130,10 @@ class JobListView(generic.ObjectListView):
     filterset = filtersets.JobFilterSet
     filterset_form = forms.JobFilterForm
     table = tables.JobTable
-    actions = ('export', 'delete', 'bulk_delete')
+    actions = {
+        'export': {'view'},
+        'bulk_delete': {'delete'},
+    }
 
 
 class JobView(generic.ObjectView):
@@ -152,4 +158,9 @@ class ConfigView(generic.ObjectView):
     queryset = ConfigRevision.objects.all()
 
     def get_object(self, **kwargs):
-        return self.queryset.first()
+        if config := self.queryset.first():
+            return config
+        # Instantiate a dummy default config if none has been created yet
+        return ConfigRevision(
+            data=get_config().defaults
+        )

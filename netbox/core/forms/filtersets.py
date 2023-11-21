@@ -1,13 +1,12 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 
 from core.choices import *
 from core.models import *
 from extras.forms.mixins import SavedFiltersMixin
-from extras.utils import FeatureQuery
 from netbox.forms import NetBoxModelFilterSetForm
+from netbox.utils import get_data_backend_choices
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES, FilterForm
 from utilities.forms.fields import ContentTypeChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import APISelectMultiple, DateTimePicker
@@ -27,7 +26,7 @@ class DataSourceFilterForm(NetBoxModelFilterSetForm):
     )
     type = forms.MultipleChoiceField(
         label=_('Type'),
-        choices=DataSourceTypeChoices,
+        choices=get_data_backend_choices,
         required=False
     )
     status = forms.MultipleChoiceField(
@@ -68,7 +67,7 @@ class JobFilterForm(SavedFiltersMixin, FilterForm):
     )
     object_type = ContentTypeChoiceField(
         label=_('Object Type'),
-        queryset=ContentType.objects.filter(FeatureQuery('jobs').get_query()),
+        queryset=ContentType.objects.with_feature('jobs'),
         required=False,
     )
     status = forms.MultipleChoiceField(

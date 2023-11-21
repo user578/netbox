@@ -1,12 +1,11 @@
 from django import forms
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.forms import SimpleArrayField
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from core.models import ContentType
 from extras.choices import *
 from extras.models import *
-from extras.utils import FeatureQuery
 from netbox.forms import NetBoxModelImportForm
 from utilities.forms import CSVModelForm
 from utilities.forms.fields import (
@@ -29,8 +28,7 @@ __all__ = (
 class CustomFieldImportForm(CSVModelForm):
     content_types = CSVMultipleContentTypeField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('custom_fields'),
+        queryset=ContentType.objects.with_feature('custom_fields'),
         help_text=_("One or more assigned object types")
     )
     type = CSVChoiceField(
@@ -40,8 +38,7 @@ class CustomFieldImportForm(CSVModelForm):
     )
     object_type = CSVContentTypeField(
         label=_('Object type'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('custom_fields'),
+        queryset=ContentType.objects.public(),
         required=False,
         help_text=_("Object type (for object or multi-object fields)")
     )
@@ -52,10 +49,17 @@ class CustomFieldImportForm(CSVModelForm):
         required=False,
         help_text=_('Choice set (for selection fields)')
     )
-    ui_visibility = CSVChoiceField(
-        label=_('UI visibility'),
-        choices=CustomFieldVisibilityChoices,
-        help_text=_('How the custom field is displayed in the user interface')
+    ui_visible = CSVChoiceField(
+        label=_('UI visible'),
+        choices=CustomFieldUIVisibleChoices,
+        required=False,
+        help_text=_('Whether the custom field is displayed in the UI')
+    )
+    ui_editable = CSVChoiceField(
+        label=_('UI editable'),
+        choices=CustomFieldUIEditableChoices,
+        required=False,
+        help_text=_('Whether the custom field is editable in the UI')
     )
 
     class Meta:
@@ -63,7 +67,7 @@ class CustomFieldImportForm(CSVModelForm):
         fields = (
             'name', 'label', 'group_name', 'type', 'content_types', 'object_type', 'required', 'description',
             'search_weight', 'filter_logic', 'default', 'choice_set', 'weight', 'validation_minimum',
-            'validation_maximum', 'validation_regex', 'ui_visibility', 'is_cloneable',
+            'validation_maximum', 'validation_regex', 'ui_visible', 'ui_editable', 'is_cloneable',
         )
 
 
@@ -89,8 +93,7 @@ class CustomFieldChoiceSetImportForm(CSVModelForm):
 class CustomLinkImportForm(CSVModelForm):
     content_types = CSVMultipleContentTypeField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('custom_links'),
+        queryset=ContentType.objects.with_feature('custom_links'),
         help_text=_("One or more assigned object types")
     )
 
@@ -105,8 +108,7 @@ class CustomLinkImportForm(CSVModelForm):
 class ExportTemplateImportForm(CSVModelForm):
     content_types = CSVMultipleContentTypeField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('export_templates'),
+        queryset=ContentType.objects.with_feature('export_templates'),
         help_text=_("One or more assigned object types")
     )
 
@@ -143,8 +145,7 @@ class SavedFilterImportForm(CSVModelForm):
 class WebhookImportForm(NetBoxModelImportForm):
     content_types = CSVMultipleContentTypeField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('webhooks'),
+        queryset=ContentType.objects.with_feature('webhooks'),
         help_text=_("One or more assigned object types")
     )
 
@@ -164,7 +165,7 @@ class TagImportForm(CSVModelForm):
         model = Tag
         fields = ('name', 'slug', 'color', 'description')
         help_texts = {
-            'color': mark_safe(_('RGB color in hexadecimal (e.g. <code>00ff00</code>)')),
+            'color': mark_safe(_('RGB color in hexadecimal. Example:') + ' <code>00ff00</code>'),
         }
 
 

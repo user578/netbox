@@ -1,5 +1,4 @@
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -32,7 +31,7 @@ class VLANGroup(OrganizationalModel):
         max_length=100
     )
     scope_type = models.ForeignKey(
-        to=ContentType,
+        to='contenttypes.ContentType',
         on_delete=models.CASCADE,
         limit_choices_to=Q(model__in=VLANGROUP_SCOPE_TYPES),
         blank=True,
@@ -234,8 +233,8 @@ class VLAN(PrimaryModel):
         if self.group and not self.group.min_vid <= self.vid <= self.group.max_vid:
             raise ValidationError({
                 'vid': _(
-                    "VID must be between {min_vid} and {max_vid} for VLANs in group {group}"
-                ).format(min_vid=self.group.min_vid, max_vid=self.group.max_vid, group=self.group)
+                    "VID must be between {minimum} and {maximum} for VLANs in group {group}"
+                ).format(minimum=self.group.min_vid, maximum=self.group.max_vid, group=self.group)
             })
 
     def get_status_color(self):

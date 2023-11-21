@@ -2,13 +2,14 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext as _
 
-from extras.choices import CustomFieldVisibilityChoices
+from extras.choices import *
 from extras.models import *
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
 __all__ = (
     'CustomFieldsMixin',
     'SavedFiltersMixin',
+    'TagsMixin',
 )
 
 
@@ -39,7 +40,7 @@ class CustomFieldsMixin:
 
     def _get_custom_fields(self, content_type):
         return CustomField.objects.filter(content_types=content_type).exclude(
-            ui_visibility=CustomFieldVisibilityChoices.VISIBILITY_HIDDEN
+            ui_visible=CustomFieldUIVisibleChoices.HIDDEN
         )
 
     def _get_form_field(self, customfield):
@@ -50,9 +51,6 @@ class CustomFieldsMixin:
         Append form fields for all CustomFields assigned to this object type.
         """
         for customfield in self._get_custom_fields(self._get_content_type()):
-            if customfield.ui_visibility == CustomFieldVisibilityChoices.VISIBILITY_HIDDEN:
-                continue
-
             field_name = f'cf_{customfield.name}'
             self.fields[field_name] = self._get_form_field(customfield)
 
@@ -72,3 +70,19 @@ class SavedFiltersMixin(forms.Form):
             'usable': True,
         }
     )
+
+
+class TagsMixin(forms.Form):
+    tags = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label=_('Tags'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Limit tags to those applicable to the object type
+        content_type = ContentType.objects.get_for_model(self._meta.model)
+        if content_type and hasattr(self.fields['tags'].widget, 'add_query_param'):
+            self.fields['tags'].widget.add_query_param('for_object_type_id', content_type.pk)

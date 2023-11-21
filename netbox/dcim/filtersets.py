@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 
 from extras.filtersets import LocalConfigContextFilterSet
 from extras.models import ConfigTemplate
+from ipam.filtersets import PrimaryIPFilterSet
 from ipam.models import ASN, L2VPN, IPAddress, VRF
 from netbox.filtersets import (
     BaseFilterSet, ChangeLoggedModelFilterSet, OrganizationalModelFilterSet, NetBoxModelFilterSet,
@@ -496,7 +497,8 @@ class DeviceTypeFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = DeviceType
         fields = [
-            'id', 'model', 'slug', 'part_number', 'u_height', 'is_full_depth', 'subdevice_role', 'airflow', 'weight', 'weight_unit',
+            'id', 'model', 'slug', 'part_number', 'u_height', 'exclude_from_utilization', 'is_full_depth', 'subdevice_role',
+            'airflow', 'weight', 'weight_unit',
         ]
 
     def search(self, queryset, name, value):
@@ -817,7 +819,13 @@ class PlatformFilterSet(OrganizationalModelFilterSet):
         fields = ['id', 'name', 'slug', 'description']
 
 
-class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilterSet, LocalConfigContextFilterSet):
+class DeviceFilterSet(
+    NetBoxModelFilterSet,
+    TenancyFilterSet,
+    ContactModelFilterSet,
+    LocalConfigContextFilterSet,
+    PrimaryIPFilterSet,
+):
     manufacturer_id = django_filters.ModelMultipleChoiceFilter(
         field_name='device_type__manufacturer',
         queryset=Manufacturer.objects.all(),
@@ -993,16 +1001,6 @@ class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilter
         method='_device_bays',
         label=_('Has device bays'),
     )
-    primary_ip4_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='primary_ip4',
-        queryset=IPAddress.objects.all(),
-        label=_('Primary IPv4 (ID)'),
-    )
-    primary_ip6_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='primary_ip6',
-        queryset=IPAddress.objects.all(),
-        label=_('Primary IPv6 (ID)'),
-    )
     oob_ip_id = django_filters.ModelMultipleChoiceFilter(
         field_name='oob_ip',
         queryset=IPAddress.objects.all(),
@@ -1069,7 +1067,7 @@ class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilter
         return queryset.exclude(devicebays__isnull=value)
 
 
-class VirtualDeviceContextFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
+class VirtualDeviceContextFilterSet(NetBoxModelFilterSet, TenancyFilterSet, PrimaryIPFilterSet):
     device_id = django_filters.ModelMultipleChoiceFilter(
         field_name='device',
         queryset=Device.objects.all(),
@@ -1745,6 +1743,10 @@ class CableFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
         method='filter_by_cable_end_b',
         field_name='terminations__termination_id'
     )
+    unterminated = django_filters.BooleanFilter(
+        method='_unterminated',
+        label=_('Unterminated'),
+    )
     type = django_filters.MultipleChoiceFilter(
         choices=CableTypeChoices
     )
@@ -1811,6 +1813,19 @@ class CableFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
     def filter_by_cable_end_b(self, queryset, name, value):
         # Filter by termination id and cable_end type
         return self.filter_by_cable_end(queryset, name, value, CableEndChoices.SIDE_B)
+
+    def _unterminated(self, queryset, name, value):
+        if value:
+            terminated_ids = (
+                queryset.filter(terminations__cable_end=CableEndChoices.SIDE_A)
+                .filter(terminations__cable_end=CableEndChoices.SIDE_B)
+                .values("id")
+            )
+            return queryset.exclude(id__in=terminated_ids)
+        else:
+            return queryset.filter(terminations__cable_end=CableEndChoices.SIDE_A).filter(
+                terminations__cable_end=CableEndChoices.SIDE_B
+            )
 
 
 class CableTerminationFilterSet(BaseFilterSet):

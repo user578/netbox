@@ -1,4 +1,4 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from netbox.registry import registry
 from utilities.choices import ButtonColorChoices
@@ -218,6 +218,7 @@ VIRTUALIZATION_MENU = Menu(
             items=(
                 get_model_item('virtualization', 'virtualmachine', _('Virtual Machines')),
                 get_model_item('virtualization', 'vminterface', _('Interfaces')),
+                get_model_item('virtualization', 'virtualdisk', _('Virtual Disks')),
             ),
         ),
         MenuGroup(
@@ -360,6 +361,7 @@ ADMIN_MENU = Menu(
                     link=f'users:netboxuser_list',
                     link_text=_('Users'),
                     permissions=[f'auth.view_user'],
+                    staff_only=True,
                     buttons=(
                         MenuItemButton(
                             link=f'users:netboxuser_add',
@@ -382,6 +384,7 @@ ADMIN_MENU = Menu(
                     link=f'users:netboxgroup_list',
                     link_text=_('Groups'),
                     permissions=[f'auth.view_group'],
+                    staff_only=True,
                     buttons=(
                         MenuItemButton(
                             link=f'users:netboxgroup_add',
@@ -399,8 +402,20 @@ ADMIN_MENU = Menu(
                         )
                     )
                 ),
-                get_model_item('users', 'token', _('API Tokens')),
-                get_model_item('users', 'objectpermission', _('Permissions'), actions=['add']),
+                MenuItem(
+                    link=f'users:token_list',
+                    link_text=_('API Tokens'),
+                    permissions=[f'users.view_token'],
+                    staff_only=True,
+                    buttons=get_model_buttons('users', 'token')
+                ),
+                MenuItem(
+                    link=f'users:objectpermission_list',
+                    link_text=_('Permissions'),
+                    permissions=[f'users.view_objectpermission'],
+                    staff_only=True,
+                    buttons=get_model_buttons('users', 'objectpermission', actions=['add'])
+                ),
             ),
         ),
         MenuGroup(
@@ -409,12 +424,14 @@ ADMIN_MENU = Menu(
                 MenuItem(
                     link='core:config',
                     link_text=_('Current Config'),
-                    permissions=['extras.view_configrevision']
+                    permissions=['extras.view_configrevision'],
+                    staff_only=True
                 ),
                 MenuItem(
                     link='extras:configrevision_list',
                     link_text=_('Config Revisions'),
-                    permissions=['extras.view_configrevision']
+                    permissions=['extras.view_configrevision'],
+                    staff_only=True
                 ),
             ),
         ),

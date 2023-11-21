@@ -2,15 +2,14 @@ import json
 
 from django import forms
 from django.conf import settings
-from django.db.models import Q
-from django.contrib.contenttypes.models import ContentType
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from core.forms.mixins import SyncedDataMixin
+from core.models import ContentType
 from dcim.models import DeviceRole, DeviceType, Location, Platform, Region, Site, SiteGroup
 from extras.choices import *
 from extras.models import *
-from extras.utils import FeatureQuery
 from netbox.config import get_config, PARAMS
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant, TenantGroup
@@ -43,14 +42,11 @@ __all__ = (
 class CustomFieldForm(BootstrapMixin, forms.ModelForm):
     content_types = ContentTypeMultipleChoiceField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('custom_fields'),
+        queryset=ContentType.objects.with_feature('custom_fields')
     )
     object_type = ContentTypeChoiceField(
         label=_('Object type'),
-        queryset=ContentType.objects.all(),
-        # TODO: Come up with a canonical way to register suitable models
-        limit_choices_to=FeatureQuery('webhooks').get_query() | Q(app_label='auth', model__in=['user', 'group']),
+        queryset=ContentType.objects.public(),
         required=False,
         help_text=_("Type of the related object (for object/multi-object fields only)")
     )
@@ -63,7 +59,7 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
         (_('Custom Field'), (
             'content_types', 'name', 'label', 'group_name', 'type', 'object_type', 'required', 'description',
         )),
-        (_('Behavior'), ('search_weight', 'filter_logic', 'ui_visibility', 'weight', 'is_cloneable')),
+        (_('Behavior'), ('search_weight', 'filter_logic', 'ui_visible', 'ui_editable', 'weight', 'is_cloneable')),
         (_('Values'), ('default', 'choice_set')),
         (_('Validation'), ('validation_minimum', 'validation_maximum', 'validation_regex')),
     )
@@ -75,13 +71,15 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
             'type': _(
                 "The type of data stored in this field. For object/multi-object fields, select the related object "
                 "type below."
-            )
+            ),
+            'description': _("This will be displayed as help text for the form field. Markdown is supported.")
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Disable changing the type of a CustomField as it almost universally causes errors if custom field data is already present.
+        # Disable changing the type of a CustomField as it almost universally causes errors if custom field data
+        # is already present.
         if self.instance.pk:
             self.fields['type'].disabled = True
 
@@ -90,10 +88,10 @@ class CustomFieldChoiceSetForm(BootstrapMixin, forms.ModelForm):
     extra_choices = forms.CharField(
         widget=ChoicesWidget(),
         required=False,
-        help_text=_(
+        help_text=mark_safe(_(
             'Enter one choice per line. An optional label may be specified for each choice by appending it with a '
-            'comma (for example, "choice1,First Choice").'
-        )
+            'comma. Example:'
+        ) + ' <code>choice1,First Choice</code>')
     )
 
     class Meta:
@@ -114,8 +112,7 @@ class CustomFieldChoiceSetForm(BootstrapMixin, forms.ModelForm):
 class CustomLinkForm(BootstrapMixin, forms.ModelForm):
     content_types = ContentTypeMultipleChoiceField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('custom_links')
+        queryset=ContentType.objects.with_feature('custom_links')
     )
 
     fieldsets = (
@@ -142,8 +139,7 @@ class CustomLinkForm(BootstrapMixin, forms.ModelForm):
 class ExportTemplateForm(BootstrapMixin, SyncedDataMixin, forms.ModelForm):
     content_types = ContentTypeMultipleChoiceField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('export_templates')
+        queryset=ContentType.objects.with_feature('export_templates')
     )
     template_code = forms.CharField(
         label=_('Template code'),
@@ -210,8 +206,7 @@ class SavedFilterForm(BootstrapMixin, forms.ModelForm):
 class BookmarkForm(BootstrapMixin, forms.ModelForm):
     object_type = ContentTypeChoiceField(
         label=_('Object type'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('bookmarks').get_query()
+        queryset=ContentType.objects.with_feature('bookmarks')
     )
 
     class Meta:
@@ -222,8 +217,7 @@ class BookmarkForm(BootstrapMixin, forms.ModelForm):
 class WebhookForm(NetBoxModelForm):
     content_types = ContentTypeMultipleChoiceField(
         label=_('Content types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('webhooks')
+        queryset=ContentType.objects.with_feature('webhooks')
     )
 
     fieldsets = (
@@ -257,8 +251,7 @@ class TagForm(BootstrapMixin, forms.ModelForm):
     slug = SlugField()
     object_types = ContentTypeMultipleChoiceField(
         label=_('Object types'),
-        queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('tags'),
+        queryset=ContentType.objects.with_feature('tags'),
         required=False
     )
 
@@ -325,7 +318,7 @@ class ConfigContextForm(BootstrapMixin, SyncedDataMixin, forms.ModelForm):
         required=False
     )
     tenant_groups = DynamicModelMultipleChoiceField(
-        label=_('Tenat groups'),
+        label=_('Tenant groups'),
         queryset=TenantGroup.objects.all(),
         required=False
     )
@@ -488,7 +481,7 @@ class ConfigRevisionForm(BootstrapMixin, forms.ModelForm, metaclass=ConfigFormMe
         (_('Security'), ('ALLOWED_URL_SCHEMES',)),
         (_('Banners'), ('BANNER_LOGIN', 'BANNER_MAINTENANCE', 'BANNER_TOP', 'BANNER_BOTTOM')),
         (_('Pagination'), ('PAGINATE_COUNT', 'MAX_PAGE_SIZE')),
-        (_('Validation'), ('CUSTOM_VALIDATORS',)),
+        (_('Validation'), ('CUSTOM_VALIDATORS', 'PROTECTION_RULES')),
         (_('User Preferences'), ('DEFAULT_USER_PREFERENCES',)),
         (_('Miscellaneous'), (
             'MAINTENANCE_MODE', 'GRAPHQL_ENABLED', 'CHANGELOG_RETENTION', 'JOB_RETENTION', 'MAPS_URL',
@@ -505,6 +498,7 @@ class ConfigRevisionForm(BootstrapMixin, forms.ModelForm, metaclass=ConfigFormMe
             'BANNER_TOP': forms.Textarea(attrs={'class': 'font-monospace'}),
             'BANNER_BOTTOM': forms.Textarea(attrs={'class': 'font-monospace'}),
             'CUSTOM_VALIDATORS': forms.Textarea(attrs={'class': 'font-monospace'}),
+            'PROTECTION_RULES': forms.Textarea(attrs={'class': 'font-monospace'}),
             'comment': forms.Textarea(),
         }
 
@@ -515,22 +509,34 @@ class ConfigRevisionForm(BootstrapMixin, forms.ModelForm, metaclass=ConfigFormMe
         config = get_config()
         for param in PARAMS:
             value = getattr(config, param.name)
-            is_static = hasattr(settings, param.name)
-            if value:
-                help_text = self.fields[param.name].help_text
-                if help_text:
-                    help_text += '<br />'  # Line break
-                help_text += _('Current value: <strong>{value}</strong>').format(value=value)
-                if is_static:
-                    help_text += _(' (defined statically)')
-                elif value == param.default:
-                    help_text += _(' (default)')
-                self.fields[param.name].help_text = help_text
+
+            # Set the field's initial value, if it can be serialized. (This may not be the case e.g. for
+            # CUSTOM_VALIDATORS, which may reference Python objects.)
+            try:
+                json.dumps(value)
                 if type(value) in (tuple, list):
-                    value = ', '.join(value)
-                self.fields[param.name].initial = value
-            if is_static:
+                    self.fields[param.name].initial = ', '.join(value)
+                else:
+                    self.fields[param.name].initial = value
+            except TypeError:
+                pass
+
+            # Check whether this parameter is statically configured (e.g. in configuration.py)
+            if hasattr(settings, param.name):
                 self.fields[param.name].disabled = True
+                self.fields[param.name].help_text = _(
+                    'This parameter has been defined statically and cannot be modified.'
+                )
+                continue
+
+            # Set the field's help text
+            help_text = self.fields[param.name].help_text
+            if help_text:
+                help_text += '<br />'  # Line break
+            help_text += _('Current value: <strong>{value}</strong>').format(value=value or '&mdash;')
+            if value == param.default:
+                help_text += _(' (default)')
+            self.fields[param.name].help_text = help_text
 
     def save(self, commit=True):
         instance = super().save(commit=False)
