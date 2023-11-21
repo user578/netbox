@@ -1243,7 +1243,7 @@ class L2VPNTerminationFilterSet(NetBoxModelFilterSet):
 
         return qs
 
-      
+
 class PrimaryIPFilterSet(django_filters.FilterSet):
     """
     An inheritable FilterSet for models which support primary IP assignment.
