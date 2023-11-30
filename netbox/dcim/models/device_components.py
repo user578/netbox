@@ -567,6 +567,10 @@ class BaseInterface(models.Model):
         return super().save(*args, **kwargs)
 
     @property
+    def tunnel_termination(self):
+        return self.tunnel_terminations.first()
+
+    @property
     def count_ipaddresses(self):
         return self.ip_addresses.count()
 
@@ -719,8 +723,14 @@ class Interface(ModularComponentModel, BaseInterface, CabledObjectModel, PathEnd
         object_id_field='interface_id',
         related_query_name='+'
     )
+    tunnel_terminations = GenericRelation(
+        to='vpn.TunnelTermination',
+        content_type_field='termination_type',
+        object_id_field='termination_id',
+        related_query_name='interface'
+    )
     l2vpn_terminations = GenericRelation(
-        to='ipam.L2VPNTermination',
+        to='vpn.L2VPNTermination',
         content_type_field='assigned_object_type',
         object_id_field='assigned_object_id',
         related_query_name='interface',

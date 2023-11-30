@@ -27,7 +27,7 @@ from netbox.plugins import PluginConfig
 # Environment setup
 #
 
-VERSION = '3.6.6-dev'
+VERSION = '3.6.7-dev'
 
 # Hostname
 HOSTNAME = platform.node()
@@ -379,6 +379,7 @@ INSTALLED_APPS = [
     'users',
     'utilities',
     'virtualization',
+    'vpn',
     'wireless',
     'django_rq',  # Must come after extras to allow overriding management commands
     'drf_spectacular',
