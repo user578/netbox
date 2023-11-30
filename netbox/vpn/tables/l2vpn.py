@@ -55,11 +55,6 @@ class L2VPNTerminationTable(NetBoxTable):
         verbose_name=_('L2VPN'),
         linkify=True
     )
-    device = tables.Column(
-        linkify=True,
-        orderable=False,
-        verbose_name=_('Device')
-    )
     assigned_object_type = columns.ContentTypeColumn(
         verbose_name=_('Object Type')
     )
@@ -77,8 +72,8 @@ class L2VPNTerminationTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = L2VPNTermination
         fields = (
-            'pk', 'l2vpn', 'device', 'assigned_object_type', 'assigned_object', 'assigned_object_site', 'actions',
+            'pk', 'l2vpn', 'assigned_object_type', 'assigned_object', 'assigned_object_site', 'actions',
         )
         default_columns = (
-            'pk', 'l2vpn', 'device', 'assigned_object_type', 'assigned_object', 'actions',
+            'pk', 'l2vpn', 'assigned_object_type', 'assigned_object', 'actions',
         )
