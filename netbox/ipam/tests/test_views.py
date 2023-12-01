@@ -887,7 +887,7 @@ class VLANDeviceMappingTestCase(
         vlans = (
             VLAN(name='VLAN 1', vid=1),
             VLAN(name='VLAN 2', vid=2),
-            VLAN(name='VLAN 3', vid=2),
+            VLAN(name='VLAN 3', vid=3),
         )
         VLAN.objects.bulk_create(vlans)
 
@@ -898,9 +898,6 @@ class VLANDeviceMappingTestCase(
             VLANDeviceMapping(device=devices[0], vlan=vlans[1]),
             VLANDeviceMapping(device=devices[1], vlan=vlans[1]),
             VLANDeviceMapping(device=devices[2], vlan=vlans[1]),
-            VLANDeviceMapping(device=devices[0], vlan=vlans[2]),
-            VLANDeviceMapping(device=devices[1], vlan=vlans[2]),
-            VLANDeviceMapping(device=devices[2], vlan=vlans[2]),
         )
         VLANDeviceMapping.objects.bulk_create(vlandevicemappings)
 
@@ -909,7 +906,7 @@ class VLANDeviceMappingTestCase(
         cls.form_data = {
             'device': devices[0].pk,
             'vlan': vlans[2].pk,
-            'description': 'A new VLAN',
+            'description': 'A new VLAN Mapping',
             'tags': [t.pk for t in tags],
         }
 
@@ -920,10 +917,10 @@ class VLANDeviceMappingTestCase(
         )
 
         cls.csv_update_data = (
-            "id,name,description",
-            f"{vlans[0].pk},VLAN107,New description 7",
-            f"{vlans[1].pk},VLAN108,New description 8",
-            f"{vlans[2].pk},VLAN109,New description 9",
+            "id,description",
+            f"{vlandevicemappings[0].pk},New description 7",
+            f"{vlandevicemappings[1].pk},New description 8",
+            f"{vlandevicemappings[2].pk},New description 9",
         )
 
 
