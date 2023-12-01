@@ -858,7 +858,16 @@ class VLANTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
 
-class VLANDeviceMappingTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class VLANDeviceMappingTestCase(
+        ViewTestCases.GetObjectViewTestCase,
+        ViewTestCases.GetObjectChangelogViewTestCase,
+        ViewTestCases.CreateObjectViewTestCase,
+        ViewTestCases.EditObjectViewTestCase,
+        ViewTestCases.DeleteObjectViewTestCase,
+        ViewTestCases.ListObjectsViewTestCase,
+        ViewTestCases.BulkImportObjectsViewTestCase,
+        ViewTestCases.BulkDeleteObjectsViewTestCase
+):
     model = VLANDeviceMapping
 
     @classmethod
@@ -916,8 +925,6 @@ class VLANDeviceMappingTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             f"{vlans[1].pk},VLAN108,New description 8",
             f"{vlans[2].pk},VLAN109,New description 9",
         )
-
-        cls.bulk_edit_data = None
 
 
 class ServiceTemplateTestCase(ViewTestCases.PrimaryObjectViewTestCase):
