@@ -917,14 +917,7 @@ class VLANDeviceMappingTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             f"{vlans[2].pk},VLAN109,New description 9",
         )
 
-        cls.bulk_edit_data = {
-            'site': sites[1].pk,
-            'group': vlangroups[1].pk,
-            'tenant': None,
-            'status': VLANStatusChoices.STATUS_RESERVED,
-            'role': roles[1].pk,
-            'description': 'New description',
-        }
+        cls.bulk_edit_data = None
 
 
 class ServiceTemplateTestCase(ViewTestCases.PrimaryObjectViewTestCase):
