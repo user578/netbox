@@ -9,7 +9,7 @@ import utilities.json
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('extras', '0101_move_configrevision'),
+        ('extras', '0102_move_configrevision'),
         ('dcim', '0183_protect_child_interfaces'),
         ('ipam', '0068_move_l2vpn'),
     ]
