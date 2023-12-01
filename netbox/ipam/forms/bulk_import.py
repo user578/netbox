@@ -482,7 +482,7 @@ class VLANDeviceMappingImportForm(NetBoxModelImportForm):
     )
     vlan = CSVModelChoiceField(
         label=_('VLAN'),
-        queryset=VLANGroup.objects.all(),
+        queryset=VLAN.objects.all(),
         to_field_name='name',
         help_text=_('Assigned VLAN')
     )
