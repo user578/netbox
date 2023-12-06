@@ -284,16 +284,14 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
         """
         Render additional_headers and return a dict of Header: Value pairs.
         """
-        headers = get_config().WEBHOOK_HEADERS.update(self.additional_headers)
+        headers = get_config().WEBHOOK_HEADERS
+        if self.additional_headers:
+            data = render_jinja2(self.additional_headers, context)
+            for line in data.splitlines():
+                header, value = line.split(':', 1)
+                headers[header.strip()] = value.strip()
 
-        if not headers:
-            return {}
-        ret = {}
-        data = render_jinja2(headers, context)
-        for line in data.splitlines():
-            header, value = line.split(':', 1)
-            ret[header.strip()] = value.strip()
-        return ret
+        return headers
 
     def render_body(self, context):
         """
