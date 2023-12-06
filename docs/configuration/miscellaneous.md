@@ -234,3 +234,11 @@ This parameter controls how frequently a failed job is retried, up to the maximu
 Default: `0` (retries disabled)
 
 The maximum number of times a background task will be retried before being marked as failed.
+
+---
+
+## WEBHOOK_HEADERS
+
+Default: {} (empty)
+
+Default, optional user-supplied HTTP headers to be sent with webhook requests in addition to the HTTP content type.

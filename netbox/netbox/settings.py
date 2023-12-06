@@ -177,6 +177,7 @@ STORAGE_CONFIG = getattr(configuration, 'STORAGE_CONFIG', {})
 TIME_FORMAT = getattr(configuration, 'TIME_FORMAT', 'g:i a')
 TIME_ZONE = getattr(configuration, 'TIME_ZONE', 'UTC')
 ENABLE_LOCALIZATION = getattr(configuration, 'ENABLE_LOCALIZATION', False)
+WEBHOOK_HEADERS = getattr(configuration, 'WEBHOOK_HEADERS', {})
 
 # Check for hard-coded dynamic config parameters
 for param in PARAMS:

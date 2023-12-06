@@ -213,9 +213,9 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
         verbose_name=_('additional headers'),
         blank=True,
         help_text=_(
-            "User-supplied HTTP headers to be sent with the request in addition to the HTTP content type. Headers "
-            "should be defined in the format <code>Name: Value</code>. Jinja2 template processing is supported with "
-            "the same context as the request body (below)."
+            "User-supplied HTTP headers to be sent with the request in addition to the HTTP content type and those "
+            "defined in configuration.py. Headers should be defined in the format <code>Name: Value</code>. Jinja2 "
+            "template processing is supported with the same context as the request body (below)."
         )
     )
     body_template = models.TextField(
@@ -284,10 +284,12 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
         """
         Render additional_headers and return a dict of Header: Value pairs.
         """
-        if not self.additional_headers:
+        headers = get_config().WEBHOOK_HEADERS.update(self.additional_headers)
+
+        if not headers:
             return {}
         ret = {}
-        data = render_jinja2(self.additional_headers, context)
+        data = render_jinja2(headers, context)
         for line in data.splitlines():
             header, value = line.split(':', 1)
             ret[header.strip()] = value.strip()
