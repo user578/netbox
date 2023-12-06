@@ -241,4 +241,4 @@ The maximum number of times a background task will be retried before being marke
 
 Default: {} (empty)
 
-Default, optional user-supplied HTTP headers to be sent with webhook requests in addition to the HTTP content type.
+Optional default user-supplied HTTP headers to be sent with webhook requests in addition to the HTTP content type.
