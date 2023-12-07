@@ -85,6 +85,17 @@ class CustomFieldChoiceSetImportForm(CSVModelForm):
             'name', 'description', 'extra_choices', 'order_alphabetically',
         )
 
+    def clean_extra_choices(self):
+        if isinstance(self.cleaned_data['extra_choices'], list):
+            data = []
+            for line in self.cleaned_data['extra_choices']:
+                try:
+                    value, label = line.split(':', maxsplit=1)
+                except ValueError:
+                    value, label = line, line
+                data.append((value, label))
+            return data
+
 
 class CustomLinkImportForm(CSVModelForm):
     content_types = CSVMultipleContentTypeField(
