@@ -76,6 +76,7 @@ class CustomFieldTestCase(ViewTestCases.PrimaryObjectViewTestCase):
 
 class CustomFieldChoiceSetTestCase(ViewTestCases.PrimaryObjectViewTestCase):
     model = CustomFieldChoiceSet
+    validation_excluded_fields = ('extra_choices',)
 
     @classmethod
     def setUpTestData(cls):
@@ -98,7 +99,7 @@ class CustomFieldChoiceSetTestCase(ViewTestCases.PrimaryObjectViewTestCase):
 
         cls.form_data = {
             'name': 'Choice Set X',
-            'extra_choices': '\n'.join(['X1,Choice 1', 'X2,Choice 2', 'X3,Choice 3'])
+            'extra_choices': '\n'.join(['X1:Choice 1', 'X2:Choice 2', 'X3:Choice 3'])
         }
 
         cls.csv_data = (
