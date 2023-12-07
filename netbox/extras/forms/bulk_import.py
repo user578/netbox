@@ -76,7 +76,10 @@ class CustomFieldChoiceSetImportForm(CSVModelForm):
     extra_choices = SimpleArrayField(
         base_field=forms.CharField(),
         required=False,
-        help_text=_('Comma-separated list of field choices')
+        help_text=_(
+            'Quoted string of comma-separated field choices with optional labels separated by colon: '
+            '"choice1:First Choice,choice2:Second Choice"'
+        )
     )
 
     class Meta:
