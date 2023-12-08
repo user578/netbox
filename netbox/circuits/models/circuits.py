@@ -239,7 +239,8 @@ class CircuitTermination(
             raise ValidationError("A circuit termination cannot attach to both a site and a provider network.")
 
     def to_objectchange(self, action):
-        objectchange = super().to_objectchange(action)
+        if (objectchange := super().to_objectchange(action)) is None:
+            return None
         objectchange.related_object = self.circuit
         return objectchange
 

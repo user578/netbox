@@ -15,6 +15,7 @@ from core.choices import JobStatusChoices
 from core.models import ContentType
 from extras.choices import *
 from extras.utils import is_taggable, register_features
+from netbox.config import get_config
 from netbox.registry import registry
 from netbox.signals import post_clean
 from utilities.json import CustomFieldJSONEncoder
@@ -84,6 +85,15 @@ class ChangeLoggingMixin(models.Model):
         by ChangeLoggingMiddleware.
         """
         from extras.models import ObjectChange
+
+        postchange_data = None
+        if action in (ObjectChangeActionChoices.ACTION_CREATE, ObjectChangeActionChoices.ACTION_UPDATE):
+            postchange_data = self.serialize_object()
+
+        if get_config().CHANGELOG_SKIP_EMPTY_CHANGES and action == ObjectChangeActionChoices.ACTION_UPDATE and hasattr(self, '_prechange_snapshot'):
+            if postchange_data == self._prechange_snapshot:
+                return None
+
         objectchange = ObjectChange(
             changed_object=self,
             object_repr=str(self)[:200],
@@ -92,7 +102,7 @@ class ChangeLoggingMixin(models.Model):
         if hasattr(self, '_prechange_snapshot'):
             objectchange.prechange_data = self._prechange_snapshot
         if action in (ObjectChangeActionChoices.ACTION_CREATE, ObjectChangeActionChoices.ACTION_UPDATE):
-            objectchange.postchange_data = self.serialize_object()
+            objectchange.postchange_data = postchange_data
 
         return objectchange
 

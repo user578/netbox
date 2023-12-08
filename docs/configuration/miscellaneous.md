@@ -80,6 +80,17 @@ changes in the database indefinitely.
 
 ---
 
+## CHANGELOG_SKIP_EMPTY_CHANGES
+
+Default: False
+
+Enables skipping the creation of logged changes on updates if there were no modifications to the object.
+
+!!! note
+    As a side-effect of turning this on, the `last_updated` field will not be included in the change log record.
+
+---
+
 ## DATA_UPLOAD_MAX_MEMORY_SIZE
 
 Default: `2621440` (2.5 MB)

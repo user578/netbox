@@ -386,7 +386,8 @@ class CableTermination(ChangeLoggedModel):
     cache_related_objects.alters_data = True
 
     def to_objectchange(self, action):
-        objectchange = super().to_objectchange(action)
+        if (objectchange := super().to_objectchange(action)) is None:
+            return None
         objectchange.related_object = self.termination
         return objectchange
 

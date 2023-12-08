@@ -159,6 +159,9 @@ def serialize_object(obj, resolve_tags=True, extra=None):
         for field in ['level', 'lft', 'rght', 'tree_id']:
             data.pop(field)
 
+    if get_config().CHANGELOG_SKIP_EMPTY_CHANGES and 'last_updated' in data:
+        data.pop('last_updated')
+
     # Include custom_field_data as "custom_fields"
     if hasattr(obj, 'custom_field_data'):
         data['custom_fields'] = data.pop('custom_field_data')

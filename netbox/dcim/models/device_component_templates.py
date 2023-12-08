@@ -91,7 +91,8 @@ class ComponentTemplateModel(ChangeLoggedModel, TrackingModelMixin):
         self._original_device_type = self.__dict__.get('device_type_id')
 
     def to_objectchange(self, action):
-        objectchange = super().to_objectchange(action)
+        if (objectchange := super().to_objectchange(action)) is None:
+            return None
         objectchange.related_object = self.device_type
         return objectchange
 
@@ -138,7 +139,8 @@ class ModularComponentTemplateModel(ComponentTemplateModel):
         )
 
     def to_objectchange(self, action):
-        objectchange = super().to_objectchange(action)
+        if (objectchange := super().to_objectchange(action)) is None:
+            return None
         if self.device_type is not None:
             objectchange.related_object = self.device_type
         elif self.module_type is not None:
