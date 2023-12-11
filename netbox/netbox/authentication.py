@@ -397,3 +397,57 @@ def user_default_groups_handler(backend, user, response, *args, **kwargs):
             user.groups.add(*group_list)
         else:
             logger.info(f"No valid group assignments for {user} - REMOTE_AUTH_DEFAULT_GROUPS may be incorrectly set?")
+
+
+def oidc_user_groups_handler(strategy, details, backend, user=None, *args, **kwargs):
+#def oidc_user_groups_handler(backend, user, response, *args, **kwargs):
+    """
+    Custom pipeline
+    """
+    # from pprint import pprint
+    # pprint(vars(strategy))
+
+    print(f'details={details}')
+    print(f'backend={backend}')
+    print(f'user={type(user)}')
+    logger = logging.getLogger('netbox.auth.oidc_user_groups_handler')
+
+    remote_groups = details['groups']
+
+    print('=ZZZ')
+    print(remote_groups)
+
+    netbox_groups = user.groups.all()
+    groups_to_add = []
+    groups_to_rm = []
+
+    # Check groups
+    for gr in remote_groups:
+        try:
+            groups_to_add.append(Group.objects.get(name=gr))
+        except Group.DoesNotExist:
+            logging.error(f"Could not assign group {gr} to remotely-authenticated user {user}: Group not found")
+
+    # Assign groups to the user
+    if groups_to_add:
+        user.groups.add(*groups_to_add)
+        logger.debug(f"Assigned groups to remotely-authenticated user {user}: {groups_to_add}")
+
+    # Remove groups from user
+    for netbox_gr in netbox_groups:
+        if netbox_gr not in remote_groups:
+            groups_to_rm.append(Group.objects.get(name=netbox_gr))
+    user.groups.remove(*groups_to_rm)
+    logger.debug(f"Remove user {user} from netbox groups: {groups_to_rm}")
+
+    # user.is_superuser = self._is_superuser(user)
+    # logger.debug(f"User {user} is Superuser: {user.is_superuser}")
+    # logger.debug(
+    #     f"User {user} should be Superuser: {self._is_superuser(user)}")
+
+    # user.is_staff = self._is_staff(user)
+    # logger.debug(f"User {user} is Staff: {user.is_staff}")
+    # logger.debug(f"User {user} should be Staff: {self._is_staff(user)}")
+
+    user.save()
+    return user
